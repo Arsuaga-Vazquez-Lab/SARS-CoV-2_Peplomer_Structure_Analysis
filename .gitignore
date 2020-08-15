@@ -1,5 +1,4 @@
 *.pdb
 *.fasta
 *.json
-notes
-beads.txt  # File used by knotplot
+*.txt
