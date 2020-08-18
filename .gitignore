@@ -1,4 +1,5 @@
-*.pdb
-*.fasta
-*.json
-*.txt
+*
+!*.py
+!figures
+!*.tex
+!references.bib
