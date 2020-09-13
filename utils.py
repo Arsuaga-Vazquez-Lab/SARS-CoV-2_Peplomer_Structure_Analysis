@@ -13,8 +13,9 @@ def backbone(protein_name: str, chain: chr):
     with open(f'{protein_name.lower()}.pdb') as pdb_file:
         pdb_data = pdb_file.read()
     atoms = []
+    backbone_atoms = ['CA', 'C', 'N']  # sometimes we might want just 'CA'
     for line in pdb_data.split('\n'):
-        if line[0:4] == 'ATOM' and line[21] == chain and line[13:16].rstrip(' ') == 'CA':
+        if line[0:4] == 'ATOM' and line[21] == chain and line[13:16].rstrip(' ') in backbone_atoms:
             residue_num = int(line[24:26])
             x = float(line[31:38].rstrip(' '))
             y = float(line[39:46].rstrip(' '))
@@ -22,7 +23,7 @@ def backbone(protein_name: str, chain: chr):
             atoms.append([x, y, z])
     return np.matrix(atoms)
 
-def dump_beads(*components, file_name='/home/computer/knotplot/beads.txt') -> None:
+def dump_beads(*components, file_name='beads.txt') -> None:
     # Given a list of atom coordinates, creates a file for knotplot to open
     # Find centroid of all chains, in order to center it
     centroid = np.array([[0., 0., 0.]])
@@ -72,3 +73,29 @@ def angle(points):
     v1 = points[0] - points[1]
     v2 = points[2] - points[1]
     return math.acos(v1.dot(v2.T) / np.linalg.norm(v1) / np.linalg.norm(v2))
+
+def acn(chain) -> float:
+    # calculates average crossing number of a protein backbone, given as a matrix of points
+    # https://en.wikipedia.org/wiki/Average_crossing_number#Alternative_formulation
+    # TODO: This doesn't quite match the results knotplot gives, and it's also very slow
+    total_arc_length = 0
+    cumulative_sum = 0
+    for s in range(1, len(chain)):
+        for t in range(1, len(chain)):
+            if s == t: continue
+            df_ds = np.array(chain[s] - chain[s - 1])[0]
+            df_dt = np.array(chain[t] - chain[t - 1])[0]
+            fs = np.array(chain[s] + chain[s - 1])[0] / 2
+            ft = np.array(chain[t] + chain[t - 1])[0] / 2
+            cumulative_sum += abs(np.cross(df_ds, df_dt).dot(fs - ft)) / pow(np.linalg.norm(fs - ft), 3)
+    return cumulative_sum / (4 * math.pi)
+
+def rog(chain) -> float:
+    # given a cluster of points (as an n by 3 matrix), calculates the radius of gyration
+    # For now, assumes all points have the same weight
+    moment = sum(chain)
+    centroid = moment / len(chain)
+    for point in chain:
+        print(point - centroid, np.linalg.norm(point - centroid))
+    sum_of_distances_squared = sum([pow(np.linalg.norm(point - centroid), 2) for point in chain])
+    return math.sqrt(sum_of_distances_squared / len(chain))
