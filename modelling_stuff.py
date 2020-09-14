@@ -6,7 +6,7 @@ from io import StringIO
 
 env = m.environ()
 
-def align(target_name: str, target_sequence: str, template_name: str, template_chain: chr) -> None:
+def align(target_name: str, target_sequence: str, template_name: str, template_chain: chr) -> StringIO:
     # creates a file called f'alignment_{target_name}_and_{template_name}.pir'
     # assumes a file already exists called f'{template_name}.pdb'
     target_pir = f'>P1;{target_name}\nsequence:{target_name}::::::::\n{target_sequence}*'
@@ -19,12 +19,18 @@ def align(target_name: str, target_sequence: str, template_name: str, template_c
                                     atom_files=template_name)
     alignment_instance.append(file=target_pir, align_codes=target_name)
     alignment_instance.align2d()
-    alignment_instance.write(file=f'alignment_{target_name}_and_{template_name}.pir')
+    alignment_filename = f'alignment_{target_name}_and_{template_name}.pir'
+    alignment_instance.write(file=alignment_filename)
+    # We don't actually care about the file, just its contents
+    with open(alignment_filename) as file:
+        file_contents = file.read()
+    os.remove(alignment_filename)
+    return StringIO(file_contents)
 
 def fold(target_name: str, target_sequence: str, template_name: str, template_chain: chr) -> StringIO:
-    align(target_name, target_sequence, template_name, template_chain)
+    alignment = align(target_name, target_sequence, template_name, template_chain)
     model = automodel(env,
-                      alnfile=f'alignment_{target_name}_and_{template_name}.pir',
+                      alnfile=alignment,
                       knowns=template_name,
                       sequence=target_name,
                       assess_methods=(assess.DOPE, assess.GA341))
