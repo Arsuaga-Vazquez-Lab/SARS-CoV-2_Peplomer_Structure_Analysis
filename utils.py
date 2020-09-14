@@ -6,20 +6,21 @@ each row representing a point, and each column representing a dimension (x, y, o
 """
 import math
 import numpy as np
-from typing import *
+from io import StringIO
 
-def backbone(protein_name: str, chain: chr):
+def backbone(protein_pdb: StringIO, chain=None, CA_only=True):
     # Uses a PDB file to get the coordinates of atoms in the backbone of a protein chain
-    with open(f'{protein_name.lower()}.pdb') as pdb_file:
-        pdb_data = pdb_file.read()
+
+    pdb_data = protein_pdb.read()
     atoms = []
-    backbone_atoms = ['CA', 'C', 'N']  # sometimes we might want just 'CA'
+    backbone_atoms = ['CA'] if CA_only else ['CA', 'C', 'N']
     for line in pdb_data.split('\n'):
-        if line[0:4] == 'ATOM' and line[21] == chain and line[13:16].rstrip(' ') in backbone_atoms:
+        # By default, look at all chains, unless just one is specified
+        if line[0:4] == 'ATOM' and (chain is None or line[21] == chain) and line[13:16].rstrip(' ') in backbone_atoms:
             residue_num = int(line[24:26])
-            x = float(line[31:38].rstrip(' '))
-            y = float(line[39:46].rstrip(' '))
-            z = float(line[47:54].rstrip(' '))
+            x = float(line[31:38].strip(' '))
+            y = float(line[39:46].strip(' '))
+            z = float(line[47:54].strip(' '))
             atoms.append([x, y, z])
     return np.matrix(atoms)
 
@@ -67,16 +68,17 @@ def rmsd(chain1, chain2):
     return math.sqrt(total_square_diff / n)
 
 def angle(points):
-    # Parameter: list of 3 points, which are each lists of 3 coords
+    # Parameter: list of 3 points (each point is a list of the x, y, & z coords)
     # returns the angle that they form (in radians)
     points = [np.array(point) for point in points]
     v1 = points[0] - points[1]
     v2 = points[2] - points[1]
     return math.acos(v1.dot(v2.T) / np.linalg.norm(v1) / np.linalg.norm(v2))
 
-def acn(chain) -> float:
+def acn(chain, calculate_writhe_instead=False) -> float:
     # calculates average crossing number of a protein backbone, given as a matrix of points
     # https://en.wikipedia.org/wiki/Average_crossing_number#Alternative_formulation
+    # The option calculate_writhe_instead exists to avoid repeating code, since writhe is similar
     # TODO: This doesn't quite match the results knotplot gives, and it's also very slow
     total_arc_length = 0
     cumulative_sum = 0
@@ -87,7 +89,8 @@ def acn(chain) -> float:
             df_dt = np.array(chain[t] - chain[t - 1])[0]
             fs = np.array(chain[s] + chain[s - 1])[0] / 2
             ft = np.array(chain[t] + chain[t - 1])[0] / 2
-            cumulative_sum += abs(np.cross(df_ds, df_dt).dot(fs - ft)) / pow(np.linalg.norm(fs - ft), 3)
+            integrand = np.cross(df_ds, df_dt).dot(fs - ft) / pow(np.linalg.norm(fs - ft), 3)
+            cumulative_sum += integrand if calculate_writhe_instead else abs(integrand)
     return cumulative_sum / (4 * math.pi)
 
 def rog(chain) -> float:
@@ -95,7 +98,5 @@ def rog(chain) -> float:
     # For now, assumes all points have the same weight
     moment = sum(chain)
     centroid = moment / len(chain)
-    for point in chain:
-        print(point - centroid, np.linalg.norm(point - centroid))
     sum_of_distances_squared = sum([pow(np.linalg.norm(point - centroid), 2) for point in chain])
     return math.sqrt(sum_of_distances_squared / len(chain))
