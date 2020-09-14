@@ -1,4 +1,3 @@
-# TODO(Nathan): just make this code good
 import re
 import os
 import modeller as m
@@ -23,7 +22,7 @@ def align(target_name: str, target_sequence: str, template_name: str, template_c
     alignment_instance.write(file=f'alignment_{target_name}_and_{template_name}.pir')
 
 def fold(target_name: str, target_sequence: str, template_name: str, template_chain: chr) -> StringIO:
-    align(target_sequence, target_name, template_name, template_chain)
+    align(target_name, target_sequence, template_name, template_chain)
     model = automodel(env,
                       alnfile=f'alignment_{target_name}_and_{template_name}.pir',
                       knowns=template_name,
