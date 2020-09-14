@@ -1,0 +1,44 @@
+# TODO(Nathan): just make this code good
+import re
+import os
+import modeller as m
+from modeller.automodel import *
+from io import StringIO
+
+env = m.environ()
+
+def align(target_name: str, target_sequence: str, template_name: str, template_chain: chr) -> None:
+    # creates a file called f'alignment_{target_name}_and_{template_name}.pir'
+    # assumes a file already exists called f'{template_name}.pdb'
+    target_pir = f'>P1;{target_name}\nsequence:{target_name}::::::::\n{target_sequence}*'
+    target_pir = StringIO(target_pir)
+    alignment_instance = m.alignment(env)
+    model_instance = m.model(env)
+    model_instance.read(file=template_name, model_segment=(f'FIRST:{template_chain}', f'LAST:{template_chain}'))
+    alignment_instance.append_model(model_instance,
+                                    align_codes=template_name,
+                                    atom_files=template_name)
+    alignment_instance.append(file=target_pir, align_codes=target_name)
+    alignment_instance.align2d()
+    alignment_instance.write(file=f'alignment_{target_name}_and_{template_name}.pir')
+
+def fold(target_name: str, target_sequence: str, template_name: str, template_chain: chr) -> StringIO:
+    align(target_sequence, target_name, template_name, template_chain)
+    model = automodel(env,
+                      alnfile=f'alignment_{target_name}_and_{template_name}.pir',
+                      knowns=template_name,
+                      sequence=target_name,
+                      assess_methods=(assess.DOPE, assess.GA341))
+    model.make()
+    # Delete unnecessary files that that just made
+    for filename in os.listdir():
+        if re.search(f'^{target_name}.*', filename) and not re.search('.*\.pdb$', filename):
+            os.remove(filename)
+    # Find the file that we want to return
+    for filename in os.listdir():
+        if re.search(f'^{target_name}\..*\.pdb$', filename):
+            folded_pdb_file = open(filename)
+            break
+    folded_pdb_file_text = folded_pdb_file.read()
+    folded_pdb_file.close()
+    return StringIO(folded_pdb_file_text)
