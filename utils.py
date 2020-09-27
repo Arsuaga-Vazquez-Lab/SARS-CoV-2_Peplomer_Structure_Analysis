@@ -67,31 +67,41 @@ def rmsd(chain1, chain2):
     total_square_diff = sum([row * row.T for row in chain1 - chain2])[0, 0]
     return math.sqrt(total_square_diff / n)
 
-def angle(points):
-    # Parameter: list of 3 points (each point is a list of the x, y, & z coords)
-    # returns the angle that they form (in radians)
-    points = [np.array(point) for point in points]
-    v1 = points[0] - points[1]
-    v2 = points[2] - points[1]
-    return math.acos(v1.dot(v2.T) / np.linalg.norm(v1) / np.linalg.norm(v2))
+def unit_vec(vector):
+    if np.linalg.norm(vector) == 0:
+        raise ZeroDivisionError
+    return vector / np.linalg.norm(vector)
 
-def acn(chain, calculate_writhe_instead=False) -> float:
-    # calculates average crossing number of a protein backbone, given as a matrix of points
-    # https://en.wikipedia.org/wiki/Average_crossing_number#Alternative_formulation
-    # The option calculate_writhe_instead exists to avoid repeating code, since writhe is similar
-    # TODO: This doesn't quite match the results knotplot gives, and it's also very slow
-    total_arc_length = 0
-    cumulative_sum = 0
-    for s in range(1, len(chain)):
-        for t in range(1, len(chain)):
-            if s == t: continue
-            df_ds = np.array(chain[s] - chain[s - 1])[0]
-            df_dt = np.array(chain[t] - chain[t - 1])[0]
-            fs = np.array(chain[s] + chain[s - 1])[0] / 2
-            ft = np.array(chain[t] + chain[t - 1])[0] / 2
-            integrand = np.cross(df_ds, df_dt).dot(fs - ft) / pow(np.linalg.norm(fs - ft), 3)
-            cumulative_sum += integrand if calculate_writhe_instead else abs(integrand)
-    return cumulative_sum / (4 * math.pi)
+def sign(num): return 1 if num > 0 else -1 if num < 0 else 0
+
+def ACN_and_space_writhe(chain) -> (float, float):
+    # calculates ACN & space writhe of a piecewise-linear path, which is given as a matrix of points
+    # returns ACN and space writhe together, as a tuple of 2 floats
+    # This formula, as well as all the variable names, is taken from:
+    # https://en.wikipedia.org/wiki/Writhe#Numerically_approximating_the_Gauss_integral_for_writhe_of_a_curve_in_space
+    acn = 0
+    space_writhe = 0
+    # Iterate through every pair of line segments
+    for i in range(1, len(chain)):
+        for j in range(1, i - 1):
+            # p1, p2, p3, & p4 are endpoints of line segments i & j
+            p1 = chain[i - 1]
+            p2 = chain[i]
+            p3 = chain[j - 1]
+            p4 = chain[j]
+            n1 = unit_vec(np.cross(p3 - p1, p4 - p1))
+            n2 = unit_vec(np.cross(p4 - p1, p4 - p2))
+            n3 = unit_vec(np.cross(p4 - p2, p3 - p2))
+            n4 = unit_vec(np.cross(p3 - p2, p3 - p1))
+            omega_star = math.asin(n1.dot(n2.T)[0, 0]) + \
+                         math.asin(n2.dot(n3.T)[0, 0]) + \
+                         math.asin(n3.dot(n4.T)[0, 0]) + \
+                         math.asin(n4.dot(n1.T)[0, 0])
+            omega_star /= 2 * math.pi
+            omega_signed = omega_star * sign(np.cross(p4 - p3, p2 - p1).dot((p3 - p1).T)[0, 0])
+            acn += omega_star
+            space_writhe += omega_signed
+    return (acn, space_writhe)
 
 def rog(chain) -> float:
     # given a cluster of points (as an n by 3 matrix), calculates the radius of gyration
