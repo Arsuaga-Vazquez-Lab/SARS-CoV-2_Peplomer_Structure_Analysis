@@ -32,8 +32,8 @@ inline double dot(std::array<double, 3> vec1,
   return vec1[0] * vec2[0] + vec1[1] * vec2[1] + vec1[2] * vec2[2];
 }
 
-inline std::array<double, 3> subtract(std::array<double, 3> vec1,
-                                      std::array<double, 3> vec2) {
+std::array<double, 3> operator - (std::array<double, 3> vec1,
+                                  std::array<double, 3> vec2) {
   // returns vec1 minus vec2
   return { vec1[0] - vec2[0], vec1[1] - vec2[1], vec1[2] - vec2[2] };
 }
@@ -55,16 +55,16 @@ std::tuple<double, double> acn_and_writhe(std::vector<std::array<double, 3>> kno
       std::array<double, 3> p3 = knot[j - 1];
       std::array<double, 3> p4 = knot[j];
       // C definitely aint gonna let me just subtract vectors from each other that easily
-      std::array<double, 3> n1 = unit(cross(subtract(p3, p1), subtract(p4, p1)));
-      std::array<double, 3> n2 = unit(cross(subtract(p4, p1), subtract(p4, p2)));
-      std::array<double, 3> n3 = unit(cross(subtract(p4, p2), subtract(p3, p2)));
-      std::array<double, 3> n4 = unit(cross(subtract(p3, p2), subtract(p3, p1)));
+      std::array<double, 3> n1 = unit(cross(p3 - p1, p4 - p1));
+      std::array<double, 3> n2 = unit(cross(p4 - p1, p4 - p2));
+      std::array<double, 3> n3 = unit(cross(p4 - p2, p3 - p2));
+      std::array<double, 3> n4 = unit(cross(p3 - p2, p3 - p1));
       double omega_star = asin(dot(n1, n2)) +
                           asin(dot(n2, n3)) +
                           asin(dot(n3, n4)) +
                           asin(dot(n4, n1));
       omega_star /= 2 * PI;
-      double omega_signed = omega_star * sign(dot(subtract(p3, p1), cross(subtract(p4, p3), subtract(p2, p1))));
+      double omega_signed = omega_star * sign(dot(p3 - p1, cross(p4 - p3, p2 - p1)));
       acn += omega_star;
       space_writhe += omega_signed;
     }
