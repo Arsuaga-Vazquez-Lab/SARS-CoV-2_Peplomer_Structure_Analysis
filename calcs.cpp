@@ -71,3 +71,8 @@ std::tuple<double, double> acn_and_writhe(std::vector<std::array<double, 3>> kno
   }
   return std::make_tuple(acn, space_writhe);
 }
+
+int main() {
+  // TODO: read in points from a csv file and output calcs to stdout
+  return 0;  // executed successfully
+}
