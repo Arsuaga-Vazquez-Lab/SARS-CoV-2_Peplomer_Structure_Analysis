@@ -17,7 +17,7 @@ std::vector<std::array<double, 3>> points_csv() {
   while (std::getline(file, line)) {
     std::array<double, 3> new_point;
     std::stringstream s (line);
-    for (int i = 0; i <3; i++) {
+    for (int i = 0; i <3 ; i++) {
       getline(s, coord, ',');
       new_point[i] = std::stod(coord);
     }
@@ -59,6 +59,9 @@ std::array<double, 3> operator - (std::array<double, 3> vec1,
 }
 
 inline double sign(double num) {
+  /* I really wanted to write this but decided it was unclear:
+     inline double sign(double num) { return num > 0. ? 1. : num < 0. ? -1. : 0.; }
+    */
   if (num > 0.) { return 1.; }
   else if (num < 0.) { return -1.; }
   else { return 0.; }
@@ -66,9 +69,10 @@ inline double sign(double num) {
 
 std::tuple<double, double> acn_and_writhe(std::vector<std::array<double, 3>> knot) {
   // given a knot as and array of points, returns a tuple (ACN, space writhe)
+  // TODO(Nathan): use multithreading to speed this up even further
   double acn = 0.;
   double space_writhe = 0.;
-  for (int i = 1; i < knot.size(); i++) {
+  for (int i = 0; i < knot.size(); i++) {
     for (int j = 1; j < i - 1; j++) {
       std::array<double, 3> p1 = knot.at(i - 1);
       std::array<double, 3> p2 = knot.at(i);
