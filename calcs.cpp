@@ -7,22 +7,21 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 std::vector<std::array<double, 3>> points_csv() {
   // returns contents of file points.csv as a list of 3D points
-  std::ifstream file;
-  std::string x;
-  std::string y;
-  std::string z;
-  file.open("points.csv");
+  std::ifstream file ("points.csv");
   std::vector<std::array<double, 3>> points;
-  while (file.good()) {
-    getline(file, x, ',');
-    getline(file, y, ',');
-    getline(file, z, ',');
-    points.push_back({std::stod(x), 
-                      std::stod(y),
-                      std::stod(z)});
+  std::string line, coord;
+  while (std::getline(file, line)) {
+    std::array<double, 3> new_point;
+    std::stringstream s (line);
+    for (int i = 0; i <3; i++) {
+      getline(s, coord, ',');
+      new_point[i] = std::stod(coord);
+    }
+    points.push_back(new_point);
   }
   file.close();
   return points;
@@ -67,14 +66,14 @@ inline double sign(double num) {
 
 std::tuple<double, double> acn_and_writhe(std::vector<std::array<double, 3>> knot) {
   // given a knot as and array of points, returns a tuple (ACN, space writhe)
-  double acn = 0;
-  double space_writhe = 0;
+  double acn = 0.;
+  double space_writhe = 0.;
   for (int i = 1; i < knot.size(); i++) {
-    for (int j = 1; j < i - 1; i++) {
-      std::array<double, 3> p1 = knot[i - 1];
-      std::array<double, 3> p2 = knot[i];
-      std::array<double, 3> p3 = knot[j - 1];
-      std::array<double, 3> p4 = knot[j];
+    for (int j = 1; j < i - 1; j++) {
+      std::array<double, 3> p1 = knot.at(i - 1);
+      std::array<double, 3> p2 = knot.at(i);
+      std::array<double, 3> p3 = knot.at(j - 1);
+      std::array<double, 3> p4 = knot.at(j);
       std::array<double, 3> n1 = unit(cross(p3 - p1, p4 - p1));
       std::array<double, 3> n2 = unit(cross(p4 - p1, p4 - p2));
       std::array<double, 3> n3 = unit(cross(p4 - p2, p3 - p2));

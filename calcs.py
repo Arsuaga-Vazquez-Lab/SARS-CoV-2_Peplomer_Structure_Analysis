@@ -8,15 +8,14 @@ import math
 import numpy as np
 from io import StringIO
 
-def backbone(protein_pdb: StringIO, chain=None, CA_only=True):
+def backbone(protein_pdb: StringIO, chain="all chains", CA_only=True):
     # Uses a PDB file to get the coordinates of atoms in the backbone of a protein chain
-
     pdb_data = protein_pdb.read()
     atoms = []
     backbone_atoms = ['CA'] if CA_only else ['CA', 'C', 'N']
     for line in pdb_data.split('\n'):
         # By default, look at all chains, unless just one is specified
-        if line[0:4] == 'ATOM' and (chain is None or line[21] == chain) and line[13:16].rstrip(' ') in backbone_atoms:
+        if line[0:4] == 'ATOM' and (chain is "all chains" or line[21] == chain) and line[13:16].rstrip(' ') in backbone_atoms:
             residue_num = int(line[24:26])
             x = float(line[31:38].strip(' '))
             y = float(line[39:46].strip(' '))
