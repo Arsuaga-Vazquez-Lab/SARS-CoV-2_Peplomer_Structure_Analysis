@@ -6,13 +6,34 @@
 #include <math.h>
 #include <vector>
 #include <iostream>
+#include <fstream>
+
+std::vector<std::array<double, 3>> points_csv() {
+  // returns contents of file points.csv as a list of 3D points
+  std::ifstream file;
+  std::string x;
+  std::string y;
+  std::string z;
+  file.open("points.csv");
+  std::vector<std::array<double, 3>> points;
+  while (file.good()) {
+    getline(file, x, ',');
+    getline(file, y, ',');
+    getline(file, z, ',');
+    points.push_back({std::stod(x), 
+                      std::stod(y),
+                      std::stod(z)});
+  }
+  file.close();
+  return points;
+}
 
 inline std::array<double, 3> unit(std::array<double, 3> vec) {
   // returns a vector (math vector, called array in C++) that points
   // in the same direction as the input, but with magnitude = 1
   double magnitude = sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
   if (magnitude == 0.) {
-    throw std::runtime_error("Cannot find unit vector for the zero vector");
+    return {0., 0., 0.};
   }
   return { vec[0] / magnitude, vec[1] / magnitude, vec[2] / magnitude };
 }
@@ -54,7 +75,6 @@ std::tuple<double, double> acn_and_writhe(std::vector<std::array<double, 3>> kno
       std::array<double, 3> p2 = knot[i];
       std::array<double, 3> p3 = knot[j - 1];
       std::array<double, 3> p4 = knot[j];
-      // C definitely aint gonna let me just subtract vectors from each other that easily
       std::array<double, 3> n1 = unit(cross(p3 - p1, p4 - p1));
       std::array<double, 3> n2 = unit(cross(p4 - p1, p4 - p2));
       std::array<double, 3> n3 = unit(cross(p4 - p2, p3 - p2));
@@ -73,6 +93,9 @@ std::tuple<double, double> acn_and_writhe(std::vector<std::array<double, 3>> kno
 }
 
 int main() {
-  // TODO: read in points from a csv file and output calcs to stdout
+  std::tuple<double, double> tuple_acn_and_space_writhe = acn_and_writhe(points_csv());
+  double acn          = std::get<0>(tuple_acn_and_space_writhe);
+  double space_writhe = std::get<1>(tuple_acn_and_space_writhe);
+  std::cout << "ACN: " << acn << "\nSpace Writhe: " << space_writhe << std::endl;
   return 0;  // executed successfully
 }
