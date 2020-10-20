@@ -55,18 +55,11 @@ inline double dot(std::array<double, 3> vec1,
 
 std::array<double, 3> operator - (std::array<double, 3> vec1,
                                   std::array<double, 3> vec2) {
-  // returns vec1 minus vec2
+  // Returns vec1 minus vec2
   return { vec1[0]-vec2[0], vec1[1]-vec2[1], vec1[2]-vec2[2] };
 }
 
-inline double sign(double num) {
-  /* I really wanted to write this but decided it was unclear:
-     inline double sign(double num) { return num > 0. ? 1. : num < 0. ? -1. : 0.; }
-    */
-  if (num > 0.) { return 1.; }
-  else if (num < 0.) { return -1.; }
-  else { return 0.; }
-}
+inline double sign(double num) { return num > 0. ? 1. : num < 0. ? -1. : 0.; }
 
 inline double expected_crossing_value(std::array<double, 3> p1,
                                       std::array<double, 3> p2,
@@ -98,7 +91,7 @@ void add_crossing_values(int i,
     std::array<double, 3> p3 = knot->at(j - 1);
     std::array<double, 3> p4 = knot->at(j);
     double crossing_value = expected_crossing_value(p1, p2, p3, p4);
-    space_writhe_subcalcs->at(i) = crossing_value;
+    space_writhe_subcalcs->at(i) += crossing_value;
     acn_subcalcs->at(i) += fabs(crossing_value);
   }
 }
@@ -117,8 +110,8 @@ std::tuple<double, double> acn_and_writhe(std::vector<std::array<double, 3>> kno
   // it splits that up into knot.size() different groups of calcs (subcalcs)
   // which each have their own thread. They modify values in an array of subcalcs,
   // which is then added up to create the final calculations
-  std::vector<double> acn_subcalcs(knot.size());
-  std::vector<double> space_writhe_subcalcs(knot.size());
+  std::vector<double> acn_subcalcs (knot.size());
+  std::vector<double> space_writhe_subcalcs (knot.size());
   std::vector<std::thread> threads = {};
   for (int i = 0; i < knot.size(); i++) {
     std::thread new_thread(add_crossing_values, i, &knot, &acn_subcalcs, &space_writhe_subcalcs);
@@ -129,15 +122,6 @@ std::tuple<double, double> acn_and_writhe(std::vector<std::array<double, 3>> kno
   }
   double acn = vec_sum(acn_subcalcs);
   double space_writhe = vec_sum(space_writhe_subcalcs);
-  acn = 0.;
-  space_writhe = 0.;
-  for (int i = 0; i < knot.size(); i++) {
-    for (int j = 1; j < i - 1; j++) {
-      double crossing_value = expected_crossing_value(knot[i-1], knot[i], knot[j-1], knot[j]);
-      acn += fabs(crossing_value);
-      space_writhe += crossing_value;
-    }
-  }
   return std::make_tuple(acn, space_writhe);
 }
 
