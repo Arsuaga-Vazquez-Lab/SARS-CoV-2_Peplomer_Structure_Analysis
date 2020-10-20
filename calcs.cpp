@@ -31,7 +31,7 @@ std::vector<std::array<double, 3>> points_csv() {
 inline std::array<double, 3> unit(std::array<double, 3> vec) {
   // returns a vector (math vector, called array in C++) that points
   // in the same direction as the input, but with magnitude = 1
-  double magnitude = sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
+  double magnitude = sqrt( vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2] );
   if (magnitude == 0.) {
     return {0., 0., 0.};
   }
@@ -56,7 +56,7 @@ inline double dot(std::array<double, 3> vec1,
 std::array<double, 3> operator - (std::array<double, 3> vec1,
                                   std::array<double, 3> vec2) {
   // returns vec1 minus vec2
-  return { vec1[0] - vec2[0], vec1[1] - vec2[1], vec1[2] - vec2[2] };
+  return { vec1[0]-vec2[0], vec1[1]-vec2[1], vec1[2]-vec2[2] };
 }
 
 inline double sign(double num) {
@@ -129,6 +129,15 @@ std::tuple<double, double> acn_and_writhe(std::vector<std::array<double, 3>> kno
   }
   double acn = vec_sum(acn_subcalcs);
   double space_writhe = vec_sum(space_writhe_subcalcs);
+  acn = 0.;
+  space_writhe = 0.;
+  for (int i = 0; i < knot.size(); i++) {
+    for (int j = 1; j < i - 1; j++) {
+      double crossing_value = expected_crossing_value(knot[i-1], knot[i], knot[j-1], knot[j]);
+      acn += fabs(crossing_value);
+      space_writhe += crossing_value;
+    }
+  }
   return std::make_tuple(acn, space_writhe);
 }
 
