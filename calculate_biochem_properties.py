@@ -5,7 +5,7 @@ https://biopython.org/docs/1.75/api/Bio.SeqUtils.ProtParam.html
 
 If this fails, be sure to run the following commands in terminal:
 pip install propy3
-pip install bipython
+pip install biopython
 
 Example usage:
 >>> import json
