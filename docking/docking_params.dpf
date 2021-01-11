@@ -17,13 +17,13 @@ about -32.389 26.0614 21.1677        # small molecule center
 tran0 random                         # initial coordinates/A or random
 quaternion0 random                   # initial orientation
 dihe0 random                         # initial dihedrals (relative) or random
-torsdof 347                            # torsional degrees of freedom
+torsdof 347                          # torsional degrees of freedom
 rmstol 2.0                           # cluster_tolerance/A
 extnrg 1000.0                        # external grid energy
 e0max 0.0 10000                      # max initial energy; max number of retries
 ga_pop_size 150                      # number of individuals in population
-ga_num_evals 2500                    # maximum number of energy evaluations
-ga_num_generations 270               # maximum number of generations
+ga_num_evals 25000                   # maximum number of energy evaluations
+ga_num_generations 2700              # maximum number of generations
 ga_elitism 1                         # number of top individuals to survive to next generation
 ga_mutation_rate 0.02                # rate of gene mutation
 ga_crossover_rate 0.8                # rate of crossover
