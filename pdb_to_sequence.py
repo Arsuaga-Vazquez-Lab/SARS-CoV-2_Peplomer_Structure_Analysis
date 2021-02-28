@@ -35,9 +35,9 @@ amino_acid_letters = {
   'VAL': 'V'
 }
 
-def sequence_from_pdb(protein_pdb_stringIO: StringIO, chain: chr) -> str:
-    protein_pdb_stringIO.seek(0)
-    lines = protein_pdb_stringIO.read().split('\n')
+def sequence_from_pdb(pdb_filename: str, chain: chr) -> str:
+    with open(pdb_filename) as file:
+        lines = file.read().split('\n')
     atom_lines = [line for line in lines if line[0:4] == 'ATOM' and line[21] == chain]
     sequence = ''
     for atom in atom_lines:
